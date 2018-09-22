@@ -1,0 +1,166 @@
+
+ --- Conocer el numero total de citas
+create view TOTAL_CITAS
+as
+  select count(*) as Total
+    from Cita; 
+
+
+ --- Conocer el numero total de citas de cada verificentro
+create view TOTAL_CITAS_VERIFICENTRO
+as
+  select id_verificentro, count(*) as Total
+    from Cita
+  group by id_verificentro; 
+
+
+ --- Calcular los porcentajes de cada verificentro
+
+create view PORCENTAJE_CITAS_VERIFICENTRO_1
+as
+ select V.CVV as Verificentro,
+        ((TCV.Total/TC.Total)*100) as Porcentaje
+   from Total_Citas_Verificentro TCV, Total_Citas TC, Verificentro V
+  where TCV.id_verificentro = V.id_verificentro;
+
+create view PORCENTAJE_CITAS_VERIFICENTRO_2
+as
+ select V.CVV as Verificentro,
+        concat(((TCV.Total/TC.Total)*100),' %') as Porcentaje
+   from Total_Citas_Verificentro TCV, Total_Citas TC, Verificentro V
+  where TCV.id_verificentro = V.id_verificentro;
+
+select * from PORCENTAJE_CITAS_VERIFICENTRO_1;
+select * from PORCENTAJE_CITAS_VERIFICENTRO_2;
+
+
+
+
+-------------------------------------------------------------------
+
+
+drop view Citas_Canceladas;
+
+Create view Citas_Canceladas
+as
+  Select C.id_verificentro, 
+         C.fecha as F_Programada, 
+         CC.fecha as F_Cancelada
+    from Cita C, Cita_Cancelado CC
+   where C.id_cita = CC.id_cita;
+
+
+drop view Dias_Anticipados;
+
+Create view Dias_Anticipados
+as
+ Select V.CVV as Verificentro,
+        datediff(C.F_Programada,C.F_Cancelada) as Dias 
+  from Citas_Canceladas C, Verificentro V
+ where C.id_verificentro = V.id_verificentro;
+
+
+Create view Promedio_Dias_Anticipados
+as
+ Select verificentro, avg( Dias ) as Promedio 
+  from Dias_Anticipados 
+ group by verificentro;
+
+Select * from Promedio_Dias_Anticipados;
+
+
+------------------------------------------------------------
+
+drop view mivista;
+
+create view citas_verificentro_iztapalapa
+as
+  select id_horario 
+  from cita
+  where id_verificentro = (select id_verificentro
+                             from Verificentro
+                            where id_delegacion =( select id_delegacion
+                                                     from Delegacion
+                                                    where nombre = 'Iztapalapa'));
+
+create view total_citas_iztapalapa
+as
+  select count(*) as total from citas_verificentro_iztapalapa;
+
+create view citas_horario_iztapalapa
+as
+  select id_horario, count(*) as cuenta
+    from citas_verificentro_iztapalapa
+  group by id_horario;
+
+create view iztapalapa_1
+as
+  select descripcion as horario, 
+         cuenta, 
+         ((cuenta/total)*100) as Porcentaje
+    from citas_horario_iztapalapa c, total_citas_iztapalapa t, horario h
+   where c.id_horario = h.id_horario;
+
+create view iztapalapa_2
+as
+select descripcion as horario, 0 as cuenta, 0 as porcentaje
+ from horario 
+where id_horario not in (select distinct id_horario 
+                           from citas_verificentro_iztapalapa);
+
+create view Final_Iztapalapa
+as
+  select * from iztapalapa_1
+  union
+  select * from iztapalapa_2;
+
+select * from Final_Iztapalapa order by horario;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

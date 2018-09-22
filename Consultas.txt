@@ -1,0 +1,8 @@
+select V.id_verificentro,C.id_cita,Ci.id_cancelada
+from Verifica v, Cita C, Cita_Cancelada Ci
+where cita=id.cita Ci=id_cita;
+
+
+select  nombre, id_cita,id_verificentro from
+Delegacion D,Verificacion V, Cita C
+where month(fecha)=month(now())
